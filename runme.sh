@@ -402,6 +402,9 @@ date -s "${current_date}"
 apt install --reinstall ca-certificates
 update-ca-certificates
 
+# create the symlink to enable the password generator service on boot
+ln -s /etc/systemd/system/passgen.service /etc/systemd/system/multi-user.target.wants/passgen.service
+
 # create the symlink to enable the memory space service on boot
 ln -s /etc/systemd/system/resize_emmc.service /etc/systemd/system/multi-user.target.wants/resize_emmc.service
 
@@ -415,6 +418,14 @@ sync
 reboot -f
 EOF
 		chmod +x stage1/stage2.sh
+		
+		# add password generator script
+		cp $ROOTDIR/greengrass/run_passgen.sh stage1/run_passgen.sh
+		cp $ROOTDIR/greengrass/passGen_aarch64 stage1/passGen_aarch64
+		chmod +x stage1/run_passgen.sh
+		chmod +x stage1/passGen_aarch64
+
+		cp $ROOTDIR/greengrass/passgen.service stage1/etc/systemd/system/passgen.service
 		
 		# add memory resizing script
 		cp $ROOTDIR/greengrass/resize_emmc.sh stage1/resize_emmc.sh
