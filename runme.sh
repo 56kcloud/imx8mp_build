@@ -377,6 +377,9 @@ do_build_debian() {
 			stage1 \
 			https://deb.debian.org/debian
 
+		# get current date
+		current_date=$(date +"%Y-%m-%d %H:%M:%S")
+
 		# prepare init-script for second stage inside VM
 		cat > stage1/stage2.sh << EOF
 #!/bin/sh
@@ -388,9 +391,19 @@ do_build_debian() {
 # passwd -d root
 echo "root:root" | chpasswd
 
-#Set hosts
+# set hosts
 echo "${HOST_NAME}" | sudo tee /etc/hostname
 echo "127.0.0.1 localhost ${HOST_NAME}" | sudo tee -a /etc/hosts
+
+# update date and ca certificates for qemu (required when installing packages on qemu)
+date
+date -s "${current_date}"
+
+apt install --reinstall ca-certificates
+update-ca-certificates
+
+# create the symlink to enable the memory space service on boot
+ln -s /etc/systemd/system/resize_emmc.service /etc/systemd/system/multi-user.target.wants/resize_emmc.service
 
 # delete self
 rm -f /stage2.sh
@@ -402,6 +415,12 @@ sync
 reboot -f
 EOF
 		chmod +x stage1/stage2.sh
+		
+		# add memory resizing script
+		cp $ROOTDIR/greengrass/resize_emmc.sh stage1/resize_emmc.sh
+		chmod +x stage1/resize_emmc.sh
+
+		cp $ROOTDIR/greengrass/resize_emmc.service stage1/etc/systemd/system/resize_emmc.service
 
 		# create empty partition image
 		dd if=/dev/zero of=rootfs.e2.orig bs=1 count=0 seek=${DEBIAN_ROOTFS_SIZE}
@@ -411,7 +430,7 @@ EOF
 
 		# bootstrap second stage within qemu
 		qemu-system-aarch64 \
-			-m 1G \
+			-m 4G \
 			-M virt \
 			-cpu cortex-a57 \
 			-smp 4 \
