@@ -377,6 +377,10 @@ do_build_debian() {
 			stage1 \
 			https://deb.debian.org/debian
 
+		# add claim certificate
+		cp $ROOTDIR/greengrass/claim.pem.crt stage1/claim.pem.crt
+		cp $ROOTDIR/greengrass/claim.private.pem.key stage1/claim.private.pem.key
+
 		# get current date
 		current_date=$(date +"%Y-%m-%d %H:%M:%S")
 
@@ -402,13 +406,20 @@ date -s "${current_date}"
 apt install --reinstall ca-certificates
 update-ca-certificates
 
+# install AWS Greengass software and dependencies
+sh ./install_greengrass.sh
+
 # create the symlink to enable the password generator service on boot
 ln -s /etc/systemd/system/passgen.service /etc/systemd/system/multi-user.target.wants/passgen.service
 
 # create the symlink to enable the memory space service on boot
 ln -s /etc/systemd/system/resize_emmc.service /etc/systemd/system/multi-user.target.wants/resize_emmc.service
 
-# delete self
+# create the symlink to enable the provisioning service on boot
+ln -s /etc/systemd/system/provision.service /etc/systemd/system/multi-user.target.wants/provision.service
+
+# delete self and Greengrass installation script
+rm -f /install_greengrass.sh
 rm -f /stage2.sh
 
 # flush disk
@@ -418,6 +429,10 @@ sync
 reboot -f
 EOF
 		chmod +x stage1/stage2.sh
+
+		# add Greengrass installation script
+		cp $ROOTDIR/greengrass/install_greengrass.sh stage1/install_greengrass.sh
+		chmod +x stage1/install_greengrass.sh
 		
 		# add password generator script
 		cp $ROOTDIR/greengrass/run_passgen.sh stage1/run_passgen.sh
@@ -432,6 +447,13 @@ EOF
 		chmod +x stage1/resize_emmc.sh
 
 		cp $ROOTDIR/greengrass/resize_emmc.service stage1/etc/systemd/system/resize_emmc.service
+
+		# add provisioning script
+		cp $ROOTDIR/greengrass/provision.sh stage1/provision.sh
+		cp $ROOTDIR/greengrass/config.yaml stage1/config.yaml
+		chmod +x stage1/provision.sh
+
+		cp $ROOTDIR/greengrass/provision.service stage1/etc/systemd/system/provision.service
 
 		# create empty partition image
 		dd if=/dev/zero of=rootfs.e2.orig bs=1 count=0 seek=${DEBIAN_ROOTFS_SIZE}
