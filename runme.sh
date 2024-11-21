@@ -301,6 +301,11 @@ cd $ROOTDIR/build/linux-imx
 make $LINUX_DEFCONFIG
 ./scripts/kconfig/merge_config.sh .config $ROOTDIR/configs/kernel.extra
 # make menuconfig
+if [ "x${UBOOT_ENVIRONMENT}" = "xmmc:2:0" ]; then
+	for file in $ROOTDIR/build/linux-imx/arch/arm64/boot/dts/freescale/*imx8mp*.dts*; do
+		sed -i '/&usdhc2/,/status/{s/status = "okay"/status = "disabled"/}' "$file"
+	done
+fi
 make -j$(nproc) Image dtbs
 rm -rf ${ROOTDIR}/images/tmp/linux
 mkdir -p ${ROOTDIR}/images/tmp/linux/boot/freescale
