@@ -117,9 +117,7 @@ for i in $COMPONENTS; do
 		case $i in
 			ftpm)
 				CHECKOUT=master
-				COMMIT=81abeb9fa968340438b4b0c08aa6685833f0bfa1
-				SHALLOW_FLAG=
-				CLONE="https://github.com/Microsoft/MSRSec.git ftpm"
+				CLONE="https://github.com/OP-TEE/optee_ftpm ftpm"
 			;;
 			buildroot)
 				CLONE="https://github.com/buildroot/buildroot"
@@ -162,16 +160,15 @@ build_optee_ftpm() {
 	local CROSS_COMPILE=$2
 	local TEE_TA_LOG_LEVEL=2
 
-	cd $ROOTDIR/build/ftpm/TAs/optee_ta
+	cd $ROOTDIR/build/ftpm
 	make -j1 \
 		CFG_FTPM_USE_WOLF=y \
 		TA_CPU=cortex-a53 \
 		TA_CROSS_COMPILE=$CROSS_COMPILE \
 		TA_DEV_KIT_DIR="$DEVKIT" \
 		CFG_TEE_TA_LOG_LEVEL=$TEE_TA_LOG_LEVEL \
-		ftpm
 
-	cp -v out/*/*.ta $ROOTDIR/images/tmp/optee/
+	cp -v *.ta $ROOTDIR/images/tmp/optee/
 }
 
 do_build_opteeos() {
@@ -232,7 +229,7 @@ do_build_opteeos() {
 
 	# External Early TA's
 	# - fTPM
-	EXTERNAL_EARLY_TAS="$ROOTDIR/build/ftpm/TAs/optee_ta/out/fTPM/bc50d971-d4c9-42c4-82cb-343fb7f37896.stripped.elf"
+	EXTERNAL_EARLY_TAS="$ROOTDIR/build/ftpm/bc50d971-d4c9-42c4-82cb-343fb7f37896.stripped.elf"
 
 	make -j${JOBS} \
 		ARCH=arm \
