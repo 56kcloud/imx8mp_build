@@ -101,7 +101,7 @@ fi
 ###############################################################################
 
 cd $ROOTDIR
-COMPONENTS="imx-atf uboot-imx linux-imx imx-mkimage imx-optee-os ftpm mfgtools buildroot"
+COMPONENTS="imx-atf uboot-imx linux-imx imx-mkimage imx-optee-os optee-ftpm ftpm mfgtools buildroot"
 mkdir -p build
 mkdir -p images/tmp/
 for i in $COMPONENTS; do
@@ -115,9 +115,13 @@ for i in $COMPONENTS; do
 		CHECKOUT=${GIT_REL["$i"]}
 		COMMIT=
 		case $i in
-			ftpm)
+			optee-ftpm)
 				CHECKOUT=master
 				CLONE="https://github.com/OP-TEE/optee_ftpm ftpm"
+			;;
+			ftpm)
+				CHECKOUT=main
+				CLONE="https://github.com/microsoft/ms-tpm-20-ref"
 			;;
 			buildroot)
 				CLONE="https://github.com/buildroot/buildroot"
@@ -158,6 +162,7 @@ cp -v $(find . | awk '/train|hdmi_imx8|dp_imx8/' ORS=" ") ${ROOTDIR}/build/imx-m
 build_optee_ftpm() {
 	local DEVKIT="$1"
 	local CROSS_COMPILE=$2
+	local MS_TPM_20_REF=$3
 	local TEE_TA_LOG_LEVEL=2
 
 	cd $ROOTDIR/build/ftpm
@@ -167,6 +172,7 @@ build_optee_ftpm() {
 		TA_CROSS_COMPILE=$CROSS_COMPILE \
 		TA_DEV_KIT_DIR="$DEVKIT" \
 		CFG_TEE_TA_LOG_LEVEL=$TEE_TA_LOG_LEVEL \
+		CFG_MS_TPM_20_REF=$MS_TPM_20_REF
 
 	cp -v *.ta $ROOTDIR/images/tmp/optee/
 }
@@ -190,7 +196,7 @@ do_build_opteeos() {
 		ta_dev_kit
 
 	# build external TAs
-	build_optee_ftpm $ROOTDIR/build/imx-optee-os/out/arm-plat-imx/export-ta_arm64 ${CROSS_COMPILE}
+	build_optee_ftpm $ROOTDIR/build/imx-optee-os/out/arm-plat-imx/export-ta_arm64 ${CROSS_COMPILE} $ROOTDIR/build/ms-tpm-20-ref
 
 	# build optee os
 	cd $ROOTDIR/build/imx-optee-os/
