@@ -101,7 +101,7 @@ fi
 ###############################################################################
 
 cd $ROOTDIR
-COMPONENTS="imx-atf uboot-imx linux-imx imx-mkimage imx-optee-os optee-ftpm ftpm mfgtools buildroot"
+COMPONENTS="imx-atf uboot-imx linux-imx imx-mkimage imx-optee-os ftpm ftpm-ref mfgtools buildroot"
 mkdir -p build
 mkdir -p images/tmp/
 for i in $COMPONENTS; do
@@ -115,13 +115,13 @@ for i in $COMPONENTS; do
 		CHECKOUT=${GIT_REL["$i"]}
 		COMMIT=
 		case $i in
-			optee-ftpm)
+			ftpm)
 				CHECKOUT=master
 				CLONE="https://github.com/OP-TEE/optee_ftpm ftpm"
 			;;
-			ftpm)
+			ftpm-ref)
 				CHECKOUT=main
-				CLONE="https://github.com/microsoft/ms-tpm-20-ref"
+				CLONE="https://github.com/microsoft/ms-tpm-20-ref ftpm-ref"
 			;;
 			buildroot)
 				CLONE="https://github.com/buildroot/buildroot"
@@ -196,7 +196,7 @@ do_build_opteeos() {
 		ta_dev_kit
 
 	# build external TAs
-	build_optee_ftpm $ROOTDIR/build/imx-optee-os/out/arm-plat-imx/export-ta_arm64 ${CROSS_COMPILE} $ROOTDIR/build/ms-tpm-20-ref
+	build_optee_ftpm $ROOTDIR/build/imx-optee-os/out/arm-plat-imx/export-ta_arm64 ${CROSS_COMPILE} $ROOTDIR/build/ftpm-ref
 
 	# build optee os
 	cd $ROOTDIR/build/imx-optee-os/
